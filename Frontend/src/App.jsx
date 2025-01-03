@@ -12,12 +12,15 @@ function App() {
       .catch(err => console.log(err))
   }, [])
 
+
   return (
     <>
-     
+
       <div>
-        <h1>Users</h1>
-        <table>
+        <table className="table-auto border-separate ">
+          <caption className="caption-top text-xl font-semibold mb-5">
+            USERS
+          </caption>
           <thead>
             <tr>
               <th>Id</th>
@@ -30,13 +33,18 @@ function App() {
           </thead>
           <tbody>
             {data.map(user => (
-              <tr key={user.id}>
+              <tr key={user.userId}>
                 <td>{user.userId}</td>
                 <td>{user.userName}</td>
                 <td>{user.userEmail}</td>
                 <td>{user.userPassword}</td>
                 <td>{user.userMobile}</td>
-                <td>{user.userStatus === 0 ? "Active" : "Inactive"}</td>
+                <td>
+                  <label className="inline-flex items-center cursor-pointer">
+                    <input type="checkbox" value="" className="sr-only peer" />
+                    <div className="relative w-11 h-6 bg-gray-200 rounded-full peer    peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                  </label>
+                </td>
               </tr>
             ))}
           </tbody>
