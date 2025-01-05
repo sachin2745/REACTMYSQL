@@ -102,6 +102,60 @@ app.put("/users/:id", (req, res) => {
 });
 
 
+// Add user API
+app.post("/api/users", (req, res) => {
+    const {
+        userName,
+        userEmail,
+        userPassword,
+        userMobile,
+        userPopular,
+        userStatus,
+        userCreatedAt,
+    } = req.body;
+
+    // Step 1: Get the maximum userId and calculate userSortBy
+    const getMaxUserIdQuery = `SELECT MAX(userId) AS maxUserId FROM users`;
+
+    db.query(getMaxUserIdQuery, (err, result) => {
+        if (err) {
+            console.error(err);
+            return res.status(500).send({ message: "Error fetching max userId" });
+        }
+
+        const nextUserId = (result[0].maxUserId || 0) + 1; // If no userId exists, start with 1
+        const userSortBy = nextUserId;
+
+        // Step 2: Insert the new user with the calculated userSortBy
+        const insertUserQuery = `
+          INSERT INTO users (userName, userEmail, userPassword, userMobile, userPopular, userSortBy, userStatus, userCreatedAt)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        `;
+
+        db.query(
+            insertUserQuery,
+            [
+                userName,
+                userEmail,
+                userPassword,
+                userMobile,
+                userPopular,
+                userSortBy, // Dynamically calculated
+                userStatus,
+                userCreatedAt,
+            ],
+            (err, result) => {
+                if (err) {
+                    console.error(err);
+                    return res.status(500).send({ message: "Error inserting user" });
+                }
+                res.send({ message: "User added successfully", userId: result.insertId });
+            }
+        );
+    });
+});
+
+
 app.listen(8001, () => {
     console.log("Server is running on port 8001");
 })
