@@ -22,7 +22,7 @@ app.get('/', (req, res) => {
 
 // Get all users
 app.get('/users', (req, res) => {
-    const sql = "SELECT * FROM users ORDER BY userSortBy ASC";
+    const sql = "SELECT * FROM users WHERE userStatus != 3 ORDER BY userSortBy ASC";
     db.query(sql, (err, data) => {
         if (err) return res.json(err);
         return res.json(data);

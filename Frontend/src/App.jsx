@@ -9,7 +9,7 @@ import axios from "axios";
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react'
 import { FaSortDown } from "react-icons/fa";
 import { format } from 'date-fns';
-
+import Swal from "sweetalert2";
 
 function App() {
   const [data, setData] = useState([])
@@ -270,6 +270,45 @@ function App() {
     }
   };
 
+  //FOR DELETE USER
+  const handleDelete = (userId) => {
+    Swal.fire({
+      title: "Are you sure?",
+      text: "Do you really want to delete this user?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
+      confirmButtonText: "Yes, delete it!",
+      cancelButtonText: "Cancel",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        // Send request to update the user's status to 3
+        fetch(`http://localhost:8001/users/${userId}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ userStatus: 3 }),
+        })
+          .then((response) => {
+            if (response.ok) {
+              toast.success( "The user has been deleted Successfully!.");
+              // Instead of reloading the page, just refresh data
+              fetch('http://localhost:8001/users')
+                .then((res) => res.json())
+                .then((updatedData) => setData(updatedData))
+                .catch((err) => console.error("Error refreshing data:", err));
+            } else {
+              toast.error( "Failed to delete the user.");
+            }
+          })
+          .catch(() => {
+            toast.error("An error occurred while deleting the user.");
+          });
+      }
+    });
+  };
 
   return (
     <>
@@ -408,12 +447,15 @@ function App() {
                             </button>
                           </MenuItem>
                           <MenuItem>
-                            <a
-                              href="#"
+                            <button
+                              onClick={(e) => {
+                                e.preventDefault();
+                                handleDelete(user.userId);
+                              }}
                               className="block px-4 py-2 text-sm text-gray-700 data-[focus]:bg-gray-100 data-[focus]:text-gray-900 data-[focus]:outline-none"
                             >
                               Delete
-                            </a>
+                            </button>
                           </MenuItem>
 
                         </div>
