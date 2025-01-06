@@ -156,6 +156,42 @@ app.post("/api/users", (req, res) => {
 });
 
 
+// Fetch user by ID
+app.get("/api/users/:id", (req, res) => {
+    const userId = req.params.id;
+    const query = "SELECT * FROM users WHERE userId = ?";
+    db.query(query, [userId], (err, result) => {
+        if (err) throw err;
+        res.send(result[0]);
+    });
+});
+
+// Update user details
+app.put("/api/users/:id", (req, res) => {
+    const userId = req.params.id;
+    const { userName, userEmail,userPassword, userMobile, userPopular, userStatus } = req.body;
+    const query = `
+      UPDATE users
+      SET
+        userName = ?,
+        userEmail = ?,
+        userPassword = ?,
+        userMobile = ?,
+        userPopular = ?,
+        userStatus = ?,
+        userUpdatedAt = UNIX_TIMESTAMP()
+      WHERE userId = ?
+    `;
+    db.query(
+        query,
+        [userName, userEmail,userPassword, userMobile, userPopular, userStatus, userId],
+        (err, result) => {
+            if (err) throw err;
+            res.send({ message: "User updated successfully" });
+        }
+    );
+});
+
 app.listen(8001, () => {
     console.log("Server is running on port 8001");
 })

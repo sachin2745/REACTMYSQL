@@ -6,6 +6,8 @@ import { IoMdCheckmarkCircleOutline } from "react-icons/io";
 import { Formik, Form, Field, ErrorMessage, useFormik } from "formik";
 import * as Yup from "yup";
 import axios from "axios";
+import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react'
+import { FaSortDown } from "react-icons/fa";
 
 function App() {
   const [data, setData] = useState([])
@@ -121,7 +123,7 @@ function App() {
       .catch((err) => toast.error("Error updating Sort By:", err));
   };
 
-
+// FOR ADD USER
   const userForm = useFormik({
     initialValues: {
       userName: "",
@@ -180,6 +182,92 @@ function App() {
     },
   });
 
+// FOR EDIT USER
+  const [user, setUser] = useState(null);
+  const [editMode, setEditMode] = useState(false);
+  const [formData, setFormData] = useState({
+    userName: "",
+    userEmail: "",
+    userMobile: "",
+    userPopular: 0,
+    userStatus: 0,
+  });
+
+  const fetchUserData = async (id) => {
+    try {
+      const response = await axios.get(`http://localhost:8001/api/users/${id}`);
+      setUser(response.data);
+      setFormData({
+        userName: response.data.userName,
+        userEmail: response.data.userEmail,
+        userMobile: response.data.userMobile,
+        userPassword: response.data.userPassword,
+        userPopular: response.data.userPopular,
+        userStatus: response.data.userStatus,
+      });
+      setEditMode(true);
+
+      // Show the edit tab by triggering the click event
+      document.getElementById("editUser-styled-tab").click();
+
+    } catch (error) {
+      toast.error("Error fetching user data:", error);
+    }
+  };
+
+
+  const [errors, setErrors] = useState({}); // State for validation errors
+
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+  };
+
+  const validateForm = () => {
+    const newErrors = {};
+    if (!formData.userName.trim()) {
+      newErrors.userName = "Name is required.";
+    }
+    if (!formData.userEmail.trim()) {
+      newErrors.userEmail = "Email is required.";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.userEmail)) {
+      newErrors.userEmail = "Invalid email format.";
+    }
+    if (!formData.userMobile.trim()) {
+      newErrors.userMobile = "Mobile number is required.";
+    } else if (!/^\d{10}$/.test(formData.userMobile)) {
+      newErrors.userMobile = "Mobile number must be 10 digits.";
+    }
+    if (!formData.userPopular.toString().trim()) {
+      newErrors.userPopular = "Please select Popularity.";
+    }
+    if (!formData.userStatus.toString().trim()) {
+      newErrors.userStatus = "Please select Status.";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0; // Returns true if no errors
+  };
+
+  const handleUpdateUser = async () => {
+    if (!validateForm()) {
+      return;
+    }
+    try {
+      await axios.put(`http://localhost:8001/api/users/${user.userId}`, formData);
+      // setEditMode(false);
+      toast.success("User updated successfully!");
+
+      // Reload the page after a short delay
+      setTimeout(() => {
+        window.location.reload();
+      }, 2000); // 2-second delay to let the notification show
+    } catch (error) {
+      toast.error("Error updating user:", error);
+    }
+  };
+
 
   return (
     <>
@@ -195,7 +283,7 @@ function App() {
             <button className="inline-block p-4 border-b-2 rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300" id="addUser-styled-tab" data-tabs-target="#styled-addUser" type="button" role="tab" aria-controls="addUser" aria-selected="false">
               Add User</button>
           </li>
-          <li className="me-2" role="presentation">
+          <li className={`me-2 editTabBtn ${editMode ? "" : "hidden"}`} role="presentation">
             <button className="inline-block p-4 border-b-2 rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300" id="editUser-styled-tab" data-tabs-target="#styled-editUser" type="button" role="tab" aria-controls="editUser" aria-selected="false">
               Edit User</button>
           </li>
@@ -216,6 +304,7 @@ function App() {
                 <th>Popular</th>
                 <th>Sort By</th>
                 <th>Status</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -282,11 +371,48 @@ function App() {
                       <div className="relative w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
                     </label>
                   </td>
+                  <td>
+                    <Menu as="div" className="relative inline-block text-left">
+                      <div>
+                        <MenuButton className="inline-flex w-full justify-center gap-x-1.5 rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                          Action
+                          <FaSortDown aria-hidden="true" className="-mr-1 -mt-1 size-5 text-gray-400" />
+                        </MenuButton>
+                      </div>
+
+                      <MenuItems
+                        transition
+                        className="absolute right-0 z-10 mt-2 w-24 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black/5 transition focus:outline-none data-[closed]:scale-95 data-[closed]:transform data-[closed]:opacity-0 data-[enter]:duration-100 data-[leave]:duration-75 data-[enter]:ease-out data-[leave]:ease-in"
+                      >
+                        <div className="py-1">
+                          <MenuItem>
+                            <button
+                              onClick={() => fetchUserData(user.userId)} // Replace 1 with the desired userId
+                              className="block px-4 py-2 text-sm text-gray-700"
+                            >
+                              Edit
+                            </button>
+                          </MenuItem>
+                          <MenuItem>
+                            <a
+                              href="#"
+                              className="block px-4 py-2 text-sm text-gray-700 data-[focus]:bg-gray-100 data-[focus]:text-gray-900 data-[focus]:outline-none"
+                            >
+                              Delete
+                            </a>
+                          </MenuItem>
+
+                        </div>
+                      </MenuItems>
+                    </Menu>
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
+
+        {/* ADD FORM */}
         <div className="hidden p-4 rounded-lg bg-gray-50 " id="styled-addUser" role="tabpanel" aria-labelledby="addUser-tab">
           <div className="p-4 rounded-lg bg-gray-50 w-2/4 mx-auto">
             <h2 className="mb-4 text-xl font-bold text-gray-900 dark:text-white">Add User</h2>
@@ -413,8 +539,106 @@ function App() {
             </form>
           </div>
         </div>
+
+        {/* EDIT FORM */}
         <div className="hidden p-4 rounded-lg bg-gray-50 " id="styled-editUser" role="tabpanel" aria-labelledby="editUser-tab">
-          <p className="text-sm text-gray-500 dark:text-gray-400">This is some placeholder content the <strong className="font-medium text-gray-800 dark:text-white">editUser tab's associated content</strong>. Clicking another tab will toggle the visibility of this one for the next. The tab JavaScript swaps classes to control the content visibility and styling.</p>
+          {editMode && (
+            <div id="styled-editUser">
+              <form className="p-4 border rounded-lg">
+                <div className="mb-4">
+                  <label className="block mb-2 text-sm font-medium">Name</label>
+                  <input
+                    type="text"
+                    name="userName"
+                    value={formData.userName}
+                    onChange={handleInputChange}
+                    className="w-full p-2 border rounded"
+                  />
+                  {errors.userName && (
+                    <p className="text-red-500 text-sm">{errors.userName}</p>
+                  )}
+                </div>
+                <div className="mb-4">
+                  <label className="block mb-2 text-sm font-medium">Email</label>
+                  <input
+                    type="email"
+                    name="userEmail"
+                    value={formData.userEmail}
+                    onChange={handleInputChange}
+                    className="w-full p-2 border rounded"
+                  />
+                  {errors.userEmail && (
+                    <p className="text-red-500 text-sm">{errors.userEmail}</p>
+                  )}
+                </div>
+                <div className="mb-4">
+                  <label className="block mb-2 text-sm font-medium">Password</label>
+                  <input
+                    type="text"
+                    name="userPassword"
+                    value={formData.userPassword}
+                    onChange={handleInputChange}
+                    className="w-full p-2 border rounded"
+                  />
+                  {errors.userPassword && (
+                    <p className="text-red-500 text-sm">{errors.userPassword}</p>
+                  )}
+                </div>
+                <div className="mb-4">
+                  <label className="block mb-2 text-sm font-medium">Mobile</label>
+                  <input
+                    type="tel"
+                    name="userMobile"
+                    value={formData.userMobile}
+                    onChange={handleInputChange}
+                    className="w-full p-2 border rounded"
+                  />
+                  {errors.userMobile && (
+                    <p className="text-red-500 text-sm">{errors.userMobile}</p>
+                  )}
+                </div>
+                <div className="mb-4">
+                  <label className="block mb-2 text-sm font-medium">Popular</label>
+                  <select
+                    name="userPopular"
+                    value={formData.userPopular}
+                    onChange={handleInputChange}
+                    className="w-full p-2 border rounded"
+                  >
+                    <option value="" selected disabled>Select Popularity</option>
+                    <option value={0}>Popular</option>
+                    <option value={1}>Not Popular</option>
+                  </select>
+                  {errors.userPopular && (
+                    <p className="text-red-500 text-sm">{errors.userPopular}</p>
+                  )}
+                </div>
+                <div className="mb-4">
+                  <label className="block mb-2 text-sm font-medium">Status</label>
+                  <select
+                    name="userStatus"
+                    value={formData.userStatus}
+                    onChange={handleInputChange}
+                    className="w-full p-2 border rounded"
+                  >
+                    <option value="" selected disabled>Select Status</option>
+                    <option value={0}>Active</option>
+                    <option value={1}>Inactive</option>
+                  </select>
+                  {errors.userStatus && (
+                    <p className="text-red-500 text-sm">{errors.userStatus}</p>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  onClick={handleUpdateUser}
+                  className="px-4 py-2 text-white bg-blue-500 rounded"
+                >
+                  Update
+                </button>
+              </form>
+            </div>
+          )}
         </div>
 
       </div>
