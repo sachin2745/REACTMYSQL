@@ -8,6 +8,8 @@ import * as Yup from "yup";
 import axios from "axios";
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react'
 import { FaSortDown } from "react-icons/fa";
+import { format } from 'date-fns';
+
 
 function App() {
   const [data, setData] = useState([])
@@ -123,7 +125,7 @@ function App() {
       .catch((err) => toast.error("Error updating Sort By:", err));
   };
 
-// FOR ADD USER
+  // FOR ADD USER
   const userForm = useFormik({
     initialValues: {
       userName: "",
@@ -182,7 +184,7 @@ function App() {
     },
   });
 
-// FOR EDIT USER
+  // FOR EDIT USER
   const [user, setUser] = useState(null);
   const [editMode, setEditMode] = useState(false);
   const [formData, setFormData] = useState({
@@ -301,6 +303,8 @@ function App() {
                 <th>Email</th>
                 <th>Password</th>
                 <th>Mobile</th>
+                <th>Created At</th>
+                <th>Updated At</th>
                 <th>Popular</th>
                 <th>Sort By</th>
                 <th>Status</th>
@@ -316,6 +320,16 @@ function App() {
                   <td>{user.userEmail}</td>
                   <td>{user.userPassword}</td>
                   <td>{user.userMobile}</td>
+                  <td>
+                    {user.userCreatedAt
+                      ? format(new Date(user.userCreatedAt * 1000), 'dd MMM yyyy hh:mm (EEE)', { timeZone: 'Asia/Kolkata' })
+                      : "N/A"}
+                  </td>
+                  <td>
+                    {user.userUpdatedAt
+                      ? format(new Date(user.userUpdatedAt * 1000), 'dd MMM yyyy hh:mm (EEE)', { timeZone: 'Asia/Kolkata' })
+                      : "N/A"}
+                  </td>
                   <td>
                     <button
                       onClick={() =>
@@ -641,7 +655,7 @@ function App() {
           )}
         </div>
 
-      </div>
+      </div >
 
 
     </>
