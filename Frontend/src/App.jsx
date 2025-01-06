@@ -187,6 +187,7 @@ function App() {
   // FOR EDIT USER
   const [user, setUser] = useState(null);
   const [editMode, setEditMode] = useState(false);
+
   const [formData, setFormData] = useState({
     userName: "",
     userEmail: "",
@@ -216,6 +217,7 @@ function App() {
       toast.error("Error fetching user data:", error);
     }
   };
+
 
 
   const [errors, setErrors] = useState({}); // State for validation errors
@@ -293,14 +295,14 @@ function App() {
         })
           .then((response) => {
             if (response.ok) {
-              toast.success( "The user has been deleted Successfully!.");
+              toast.success("The user has been deleted Successfully!.");
               // Instead of reloading the page, just refresh data
               fetch('http://localhost:8001/users')
                 .then((res) => res.json())
                 .then((updatedData) => setData(updatedData))
                 .catch((err) => console.error("Error refreshing data:", err));
             } else {
-              toast.error( "Failed to delete the user.");
+              toast.error("Failed to delete the user.");
             }
           })
           .catch(() => {
@@ -309,6 +311,33 @@ function App() {
       }
     });
   };
+
+  // VIEW USER DATA OPENING MODAL
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const fetchUser = async (id) => {
+    try {
+      const response = await axios.get(`http://localhost:8001/api/users/${id}`);
+      setUser(response.data);
+      setFormData({
+        userName: response.data.userName,
+        userEmail: response.data.userEmail,
+        userMobile: response.data.userMobile,
+        userPassword: response.data.userPassword,
+        userPopular: response.data.userPopular,
+        userStatus: response.data.userStatus,
+      });
+      setIsModalOpen(true); // Open modal      
+    } catch (error) {
+      toast.error("Error fetching user data:", error);
+    }
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setEditMode(false);
+    setUser(null);
+  };
+
 
   return (
     <>
@@ -355,7 +384,10 @@ function App() {
                 <tr key={user.userId}>
                   <td>{data.indexOf(user) + 1}</td>
                   <td>{user.userId}</td>
-                  <td>{user.userName}</td>
+                  <td className='cursor-pointer hover:text-blue-500'
+                    onClick={() => fetchUser(user.userId)}>
+                    {user.userName}
+                  </td>
                   <td>{user.userEmail}</td>
                   <td>{user.userPassword}</td>
                   <td>{user.userMobile}</td>
@@ -484,7 +516,7 @@ function App() {
                   name="userName"
                   onChange={userForm.handleChange}
                   onBlur={userForm.handleBlur}
-                  value={userForm.values.userName}
+                  // value={userForm.values.userName}
                   className="w-full p-2 border rounded"
                 />
                 {userForm.touched.userName && userForm.errors.userName && (
@@ -503,7 +535,7 @@ function App() {
                   name="userEmail"
                   onChange={userForm.handleChange}
                   onBlur={userForm.handleBlur}
-                  value={userForm.values.userEmail}
+                  // value={userForm.values.userEmail}
                   className="w-full p-2 border rounded"
                 />
                 {userForm.touched.userEmail && userForm.errors.userEmail && (
@@ -522,7 +554,7 @@ function App() {
                   name="userPassword"
                   onChange={userForm.handleChange}
                   onBlur={userForm.handleBlur}
-                  value={userForm.values.userPassword}
+                  // value={userForm.values.userPassword}
                   className="w-full p-2 border rounded"
                 />
                 {userForm.touched.userPassword && userForm.errors.userPassword && (
@@ -541,7 +573,7 @@ function App() {
                   name="userMobile"
                   onChange={userForm.handleChange}
                   onBlur={userForm.handleBlur}
-                  value={userForm.values.userMobile}
+                  // value={userForm.values.userMobile}
                   maxLength={10}
                   className="w-full p-2 border rounded"
                 />
@@ -560,9 +592,11 @@ function App() {
                   name="userPopular"
                   onChange={userForm.handleChange}
                   onBlur={userForm.handleBlur}
-                  value={userForm.values.userPopular}
+                  // value={userForm.values.userPopular}
                   className="w-full p-2 border rounded"
+                  required
                 >
+                  <option value="" selected disabled>Select Popular</option>
                   <option value="1">No</option>
                   <option value="0">Yes</option>
                 </select>
@@ -578,9 +612,11 @@ function App() {
                   name="userStatus"
                   onChange={userForm.handleChange}
                   onBlur={userForm.handleBlur}
-                  value={userForm.values.userStatus}
+                  // value={userForm.values.userStatus}
                   className="w-full p-2 border rounded"
+                  required
                 >
+                   <option value="" selected disabled>Select Status</option>
                   <option value="0">Active</option>
                   <option value="1">Inactive</option>
                 </select>
@@ -696,6 +732,86 @@ function App() {
             </div>
           )}
         </div>
+
+        {/* Modal For View User */}
+        {isModalOpen && (
+          <div className="modal">
+            <div className="modal-content">
+              <button className="close-button" onClick={closeModal}>
+                &times;
+              </button>
+              <h2 className="text-2xl font-semibold text-gray-800 mb-4">User Details</h2>
+              <form className="grid grid-cols-1 gap-4">
+                {/* Name */}
+                <div className="flex flex-col">
+                  <label className="text-sm font-medium text-gray-600 mb-1">Name:</label>
+                  <input
+                    type="text"
+                    value={formData.userName}
+                    readOnly
+                    className="border border-gray-300 rounded-lg px-3 py-2 bg-gray-100 text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                {/* Email */}
+                <div className="flex flex-col">
+                  <label className="text-sm font-medium text-gray-600 mb-1">Email:</label>
+                  <input
+                    type="email"
+                    value={formData.userEmail}
+                    readOnly
+                    className="border border-gray-300 rounded-lg px-3 py-2 bg-gray-100 text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                {/* Mobile */}
+                <div className="flex flex-col">
+                  <label className="text-sm font-medium text-gray-600 mb-1">Mobile:</label>
+                  <input
+                    type="tel"
+                    value={formData.userMobile}
+                    readOnly
+                    className="border border-gray-300 rounded-lg px-3 py-2 bg-gray-100 text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                {/* Password */}
+                <div className="flex flex-col">
+                  <label className="text-sm font-medium text-gray-600 mb-1">Password:</label>
+                  <input
+                    type="text"
+                    value={formData.userPassword}
+                    readOnly
+                    className="border border-gray-300 rounded-lg px-3 py-2 bg-gray-100 text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                {/* Popular */}
+                <div className="flex flex-col">
+                  <label className="text-sm font-medium text-gray-600 mb-1">Popular:</label>
+                  <input
+                    type="text"
+                    value={formData.userPopular == 0 ? "Yes" : "No"}
+                    readOnly
+                    className="border border-gray-300 rounded-lg px-3 py-2 bg-gray-100 text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                {/* Status */}
+                <div className="flex flex-col">
+                  <label className="text-sm font-medium text-gray-600 mb-1">Status:</label>
+                  <input
+                    type="text"
+                    value={formData.userStatus == 0 ? "Active" : "Inactive"}
+                    readOnly
+                    className="border border-gray-300 rounded-lg px-3 py-2 bg-gray-100 text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+              </form>
+
+            </div>
+          </div>
+        )}
 
       </div >
 
