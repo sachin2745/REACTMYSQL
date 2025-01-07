@@ -126,6 +126,7 @@ function App() {
   };
 
   // FOR ADD USER
+  const [previewImage, setPreviewImage] = useState(null);
   const userForm = useFormik({
     initialValues: {
       userName: "",
@@ -135,6 +136,7 @@ function App() {
       userPopular: 0,
       userSortBy: 0,
       userStatus: 0,
+      userImage: null,
     },
     validationSchema: Yup.object({
       userName: Yup.string()
@@ -149,21 +151,28 @@ function App() {
       userMobile: Yup.string()
         .matches(/^\d{10}$/, "Mobile must be 10 digits")
         .required("Mobile is required"),
+      userImage: Yup.mixed().required("Image is required"),
     }),
     onSubmit: async (values) => {
-      // Add userCreatedAt in Unix timestamp format
-      const userData = {
-        ...values,
-        userCreatedAt: Math.floor(Date.now() / 1000), // Add current UNIX timestamp
-      };
+      const formData = new FormData();
+      formData.append("userName", values.userName);
+      formData.append("userEmail", values.userEmail);
+      formData.append("userPassword", values.userPassword);
+      formData.append("userMobile", values.userMobile);
+      formData.append("userPopular", values.userPopular);
+      formData.append("userSortBy", values.userSortBy);
+      formData.append("userStatus", values.userStatus);
+      formData.append("userImage", values.userImage); // Append image
+      formData.append("userCreatedAt", Math.floor(Date.now() / 1000)); // Add current UNIX timestamp
+
 
       try {
         const res = await fetch('http://localhost:8001/api/users', {
           method: "POST",
-          body: JSON.stringify(userData),
-          headers: {
-            "Content-Type": "application/json",
-          },
+          body: formData,
+          // headers: {
+          //   "Content-Type": "application/json",
+          // },
         });
 
         if (res.status === 200) {
@@ -183,6 +192,13 @@ function App() {
       }
     },
   });
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setPreviewImage(URL.createObjectURL(file));
+      userForm.setFieldValue("userImage", file); // Set image in Formik
+    }
+  };
 
   // FOR EDIT USER
   const [user, setUser] = useState(null);
@@ -367,6 +383,7 @@ function App() {
               <tr>
                 <th>S.No.</th>
                 <th>Id</th>
+                <th>Image</th>
                 <th>Name</th>
                 <th>Email</th>
                 <th>Password</th>
@@ -384,6 +401,10 @@ function App() {
                 <tr key={user.userId}>
                   <td>{data.indexOf(user) + 1}</td>
                   <td>{user.userId}</td>
+                  <td>
+                    <img src={`http://localhost:8001${user.userImage}`} alt="User Image" className='h-20 w-20' />
+                  </td>
+
                   <td className='cursor-pointer hover:text-blue-500'
                     onClick={() => fetchUser(user.userId)}>
                     {user.userName}
@@ -581,7 +602,23 @@ function App() {
                   <div className="text-red-500 text-sm">{userForm.errors.userMobile}</div>
                 )}
               </div>
-
+              <div>
+                <label htmlFor="userImage">Upload Image</label>
+                <input
+                  type="file"
+                  id="userImage"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                />
+                {userForm.touched.userImage && userForm.errors.userImage && (
+                  <div>{userForm.errors.userImage}</div>
+                )}
+                {previewImage && (
+                  <div>
+                    <img src={previewImage} alt="Preview" width="100" height="100" />
+                  </div>
+                )}
+              </div>
               {/* Popular */}
               <div className="mb-4">
                 <label htmlFor="userPopular" className="block mb-2 text-sm font-medium">
@@ -596,7 +633,7 @@ function App() {
                   className="w-full p-2 border rounded"
                   required
                 >
-                  <option value="" selected disabled>Select Popular</option>
+                  <option value="" disabled>Select Popular</option>
                   <option value="1">No</option>
                   <option value="0">Yes</option>
                 </select>
@@ -616,7 +653,7 @@ function App() {
                   className="w-full p-2 border rounded"
                   required
                 >
-                   <option value="" selected disabled>Select Status</option>
+                  <option value="" disabled>Select Status</option>
                   <option value="0">Active</option>
                   <option value="1">Inactive</option>
                 </select>

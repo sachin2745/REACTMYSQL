@@ -1,12 +1,17 @@
 const express = require('express');
 const mysql = require('mysql');
 const cors = require('cors');
+const multer = require('multer');
+const fs = require("fs");
+const path = require("path");
+
 
 const app = express();
 app.use(cors());
 
 // Middleware to parse JSON request bodies
-app.use(express.json());
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ limit: "10mb", extended: true }));
 
 // Create a connection to the database
 const db = mysql.createConnection({
@@ -19,6 +24,33 @@ const db = mysql.createConnection({
 app.get('/', (req, res) => {
     return res.json("From Backend Side");
 })
+
+// Configure Multer for file uploads
+// Dynamic folder storage setup
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        const folderName = file.fieldname; // Dynamically get folder name from fieldname
+        const uploadPath = path.join(__dirname, "static/uploads", folderName);
+
+        // Ensure the folder exists, create it if not
+        if (!fs.existsSync(uploadPath)) {
+            fs.mkdirSync(uploadPath, { recursive: true });
+        }
+
+        cb(null, uploadPath);
+    },
+    filename: (req, file, cb) => {
+        const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+        cb(null, `${uniqueSuffix}-${file.originalname}`);
+    },
+});
+
+const upload = multer({
+    storage,
+    limits: { fileSize: 5 * 1024 * 1024 }, // Set file size limit to 5MB
+});
+// Serve uploads folder
+app.use("/uploads", express.static(path.join(__dirname, "static/uploads")));
 
 // Get all users
 app.get('/users', (req, res) => {
@@ -103,7 +135,7 @@ app.put("/users/:id", (req, res) => {
 
 
 // Add user API
-app.post("/api/users", (req, res) => {
+app.post("/api/users", upload.single("userImage"), (req, res) => {
     const {
         userName,
         userEmail,
@@ -113,6 +145,8 @@ app.post("/api/users", (req, res) => {
         userStatus,
         userCreatedAt,
     } = req.body;
+
+    const userImage = req.file ? `/uploads/userImage/${req.file.filename}` : null;
 
     // Step 1: Get the maximum userId and calculate userSortBy
     const getMaxUserIdQuery = `SELECT MAX(userId) AS maxUserId FROM users`;
@@ -128,14 +162,15 @@ app.post("/api/users", (req, res) => {
 
         // Step 2: Insert the new user with the calculated userSortBy
         const insertUserQuery = `
-          INSERT INTO users (userName, userEmail, userPassword, userMobile, userPopular, userSortBy, userStatus, userCreatedAt)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+          INSERT INTO users (userName, userImage, userEmail, userPassword, userMobile, userPopular, userSortBy, userStatus, userCreatedAt)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         `;
 
         db.query(
             insertUserQuery,
             [
                 userName,
+                userImage,
                 userEmail,
                 userPassword,
                 userMobile,
@@ -147,7 +182,8 @@ app.post("/api/users", (req, res) => {
             (err, result) => {
                 if (err) {
                     console.error(err);
-                    return res.status(500).send({ message: "Error inserting user" });
+                    console.error("Insert Error Details:", err.code, err.sqlMessage, err.sql);
+                    return res.status(500).send({ message: "Error inserting user", error: err.sqlMessage  });
                 }
                 res.send({ message: "User added successfully", userId: result.insertId });
             }
@@ -169,7 +205,7 @@ app.get("/api/users/:id", (req, res) => {
 // Update user details
 app.put("/api/users/:id", (req, res) => {
     const userId = req.params.id;
-    const { userName, userEmail,userPassword, userMobile, userPopular, userStatus } = req.body;
+    const { userName, userEmail, userPassword, userMobile, userPopular, userStatus } = req.body;
     const query = `
       UPDATE users
       SET
@@ -184,7 +220,7 @@ app.put("/api/users/:id", (req, res) => {
     `;
     db.query(
         query,
-        [userName, userEmail,userPassword, userMobile, userPopular, userStatus, userId],
+        [userName, userEmail, userPassword, userMobile, userPopular, userStatus, userId],
         (err, result) => {
             if (err) throw err;
             res.send({ message: "User updated successfully" });
