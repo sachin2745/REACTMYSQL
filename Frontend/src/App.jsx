@@ -10,6 +10,8 @@ import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react'
 import { FaSortDown } from "react-icons/fa";
 import { format } from 'date-fns';
 import Swal from "sweetalert2";
+import Zoom from 'react-medium-image-zoom';
+import 'react-medium-image-zoom/dist/styles.css';
 
 function App() {
   const [data, setData] = useState([])
@@ -402,7 +404,9 @@ function App() {
                   <td>{data.indexOf(user) + 1}</td>
                   <td>{user.userId}</td>
                   <td>
+                  <Zoom>
                     <img src={`http://localhost:8001${user.userImage}`} alt="User Image" className='h-20 w-20' />
+                    </Zoom>
                   </td>
 
                   <td className='cursor-pointer hover:text-blue-500'
