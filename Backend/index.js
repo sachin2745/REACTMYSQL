@@ -183,7 +183,7 @@ app.post("/api/users", upload.single("userImage"), (req, res) => {
                 if (err) {
                     console.error(err);
                     console.error("Insert Error Details:", err.code, err.sqlMessage, err.sql);
-                    return res.status(500).send({ message: "Error inserting user", error: err.sqlMessage  });
+                    return res.status(500).send({ message: "Error inserting user", error: err.sqlMessage });
                 }
                 res.send({ message: "User added successfully", userId: result.insertId });
             }
@@ -203,29 +203,41 @@ app.get("/api/users/:id", (req, res) => {
 });
 
 // Update user details
-app.put("/api/users/:id", (req, res) => {
+app.put("/api/users/:id", upload.single("userImage"), (req, res) => {
     const userId = req.params.id;
     const { userName, userEmail, userPassword, userMobile, userPopular, userStatus } = req.body;
-    const query = `
-      UPDATE users
-      SET
-        userName = ?,
-        userEmail = ?,
-        userPassword = ?,
-        userMobile = ?,
-        userPopular = ?,
-        userStatus = ?,
-        userUpdatedAt = UNIX_TIMESTAMP()
-      WHERE userId = ?
-    `;
-    db.query(
-        query,
-        [userName, userEmail, userPassword, userMobile, userPopular, userStatus, userId],
-        (err, result) => {
-            if (err) throw err;
-            res.send({ message: "User updated successfully" });
+    const userImage = req.file ? `/uploads/userImage/${req.file.filename}` : null;
+
+    let query = `
+    UPDATE users
+    SET
+      userName = ?,
+      userEmail = ?,
+      userPassword = ?,
+      userMobile = ?,
+      userPopular = ?,
+      userStatus = ?,
+      userUpdatedAt = UNIX_TIMESTAMP()
+  `;
+
+    const params = [userName, userEmail, userPassword, userMobile, userPopular, userStatus];
+
+    // Update userImage only if a new image is uploaded
+    if (userImage) {
+        query += `, userImage = ?`;
+        params.push(userImage);
+    }
+
+    query += ` WHERE userId = ?`;
+    params.push(userId);
+
+    db.query(query, params, (err, result) => {
+        if (err) {
+            console.error(err);
+            return res.status(500).send({ message: "Error updating user" });
         }
-    );
+        res.send({ message: "User updated successfully" });
+    });
 });
 
 app.listen(8001, () => {

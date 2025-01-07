@@ -205,6 +205,7 @@ function App() {
   // FOR EDIT USER
   const [user, setUser] = useState(null);
   const [editMode, setEditMode] = useState(false);
+  const [previewEditImage, setPreviewEditImage] = useState("");
 
   const [formData, setFormData] = useState({
     userName: "",
@@ -225,7 +226,14 @@ function App() {
         userPassword: response.data.userPassword,
         userPopular: response.data.userPopular,
         userStatus: response.data.userStatus,
+        userImage: null,
       });
+
+      // Set the initial image for preview
+      if (response.data.userImage) {
+        setPreviewEditImage(`http://localhost:8001${response.data.userImage}`);
+      }
+
       setEditMode(true);
 
       // Show the edit tab by triggering the click event
@@ -237,13 +245,22 @@ function App() {
   };
 
 
-
   const [errors, setErrors] = useState({}); // State for validation errors
 
 
   const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
+    const { name, value, files } = e.target;
+
+    // Check if the input is the image file input
+    if (name === "userImage" && files && files[0]) {
+      // Update the preview with the selected image
+      const file = files[0];
+      const fileURL = URL.createObjectURL(file);
+      setPreviewEditImage(fileURL); // Set preview to the selected image
+      setFormData({ ...formData, userImage: file }); // Update form data with the file
+    } else {
+      setFormData({ ...formData, [name]: value }); // For other inputs
+    }
   };
 
   const validateForm = () => {
@@ -277,7 +294,14 @@ function App() {
       return;
     }
     try {
-      await axios.put(`http://localhost:8001/api/users/${user.userId}`, formData);
+      const updatedData = new FormData();
+      Object.entries(formData).forEach(([key, value]) => {
+        updatedData.append(key, value);
+      });
+
+      await axios.put(`http://localhost:8001/api/users/${user.userId}`, updatedData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
       // setEditMode(false);
       toast.success("User updated successfully!");
 
@@ -404,8 +428,8 @@ function App() {
                   <td>{data.indexOf(user) + 1}</td>
                   <td>{user.userId}</td>
                   <td>
-                  <Zoom>
-                    <img src={`http://localhost:8001${user.userImage}`} alt="User Image" className='h-20 w-20' />
+                    <Zoom>
+                      <img src={`http://localhost:8001${user.userImage}`} alt="User Image" className='h-20 w-20' />
                     </Zoom>
                   </td>
 
@@ -607,7 +631,7 @@ function App() {
                 )}
               </div>
               <div>
-                <label htmlFor="userImage">Upload Image</label>
+                <label htmlFor="userImage" className="block mb-2 text-sm font-medium">Upload Image</label>
                 <input
                   type="file"
                   id="userImage"
@@ -618,7 +642,7 @@ function App() {
                   <div>{userForm.errors.userImage}</div>
                 )}
                 {previewImage && (
-                  <div>
+                  <div className='flex  justify-center justify-content-center  my-3'>
                     <img src={previewImage} alt="Preview" width="100" height="100" />
                   </div>
                 )}
@@ -730,6 +754,21 @@ function App() {
                     <p className="text-red-500 text-sm">{errors.userMobile}</p>
                   )}
                 </div>
+                <div className='mb-4'>
+                  <label className="block mb-2 text-sm font-medium">Image:</label>
+                  <input
+                    type="file"
+                    name="userImage"
+                    accept="image/*"
+                    onChange={handleInputChange} // Trigger preview update on image change
+                  />
+                  {previewEditImage && (
+                    <div >
+                      <p>Preview:</p>
+                      <img src={previewEditImage} alt="Preview" width="100" height="100"  className='flex mx-auto justify-center'/>
+                    </div>
+                  )}
+                </div>
                 <div className="mb-4">
                   <label className="block mb-2 text-sm font-medium">Popular</label>
                   <select
@@ -738,7 +777,7 @@ function App() {
                     onChange={handleInputChange}
                     className="w-full p-2 border rounded"
                   >
-                    <option value="" selected disabled>Select Popularity</option>
+                    <option value="" disabled>Select Popularity</option>
                     <option value={0}>Popular</option>
                     <option value={1}>Not Popular</option>
                   </select>
@@ -754,7 +793,7 @@ function App() {
                     onChange={handleInputChange}
                     className="w-full p-2 border rounded"
                   >
-                    <option value="" selected disabled>Select Status</option>
+                    <option value="" disabled>Select Status</option>
                     <option value={0}>Active</option>
                     <option value={1}>Inactive</option>
                   </select>
@@ -765,10 +804,11 @@ function App() {
                 <button
                   type="button"
                   onClick={handleUpdateUser}
-                  className="px-4 py-2 text-white bg-blue-500 rounded"
+                  className="px-4 py-2 text-white bg-blue-500 rounded font-bold"
                 >
                   Update
                 </button>
+                <a href="" className='py-2 px-3 bg-black text-white ml-5 font-bold rounded'>Cancel</a>
               </form>
             </div>
           )}
