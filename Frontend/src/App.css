@@ -49,5 +49,66 @@ table, th, td {
 .close-button:hover {
   color: red;
 }
+div.dt-container select.dt-input {
+  padding: 5px !important;
+  padding-right: 18px !important;
+}
 
+.dt-buttons {
+  margin-top: 10px !important;
+  margin-bottom: 10px !important;
+}
+.dt-button {
+  background-color: #007bff !important;
+  color: #fff !important;
+  border: none !important;
+  padding: 6px 16px !important;
+  margin-right: 5px !important;
+}
 
+.dt-search {
+  display: flex !important;  
+  justify-content: end !important;
+  align-items: center !important;
+  padding-top: 10px !important;
+} 
+.dt-info{
+  display: flex !important;
+  justify-content: start !important;
+  align-items: center !important;
+  padding-top: 10px !important;
+}
+
+.dt-paging{
+  display: flex !important;
+  justify-content: end !important;
+  align-items: center !important;
+  margin-top: -19px !important;
+}
+@media screen and (max-width: 640px) {
+  .dt-buttons {
+    font-size: 12px !important;
+  }
+  .dt-search {
+    display: flex !important;  
+    justify-content: center !important;
+    align-items: center !important;
+    padding-top: 0px !important;
+    padding-bottom: 10px !important;
+    font-size: 12px !important;
+  } 
+  .dt-info{
+    display: flex !important;
+    justify-content: start !important;
+    align-items: center !important;
+    padding-top: 10px !important;
+    font-size: 12px !important;
+  }
+  .dt-paging{
+    display: flex !important;
+    justify-content: end !important;
+    align-items: center !important;
+    margin-top: -19px !important;
+    font-size: 11px !important;
+  }
+}

@@ -12,10 +12,15 @@ import { format } from 'date-fns';
 import Swal from "sweetalert2";
 import Zoom from 'react-medium-image-zoom';
 import 'react-medium-image-zoom/dist/styles.css';
+import $ from 'jquery'; // Import jQuery
+import 'datatables.net'; // DataTables JS
+import 'datatables.net-responsive'; // Responsive extension
+import 'datatables.net-buttons';
+import 'datatables.net-buttons/js/buttons.html5';
+import 'datatables.net-buttons/js/buttons.print';
 
 function App() {
   const [data, setData] = useState([])
-
 
   useEffect(() => {
     fetch('http://localhost:8001/users')
@@ -23,6 +28,20 @@ function App() {
       .then(data => setData(data))
       .catch(err => console.log(err))
   }, [])
+
+  // Initialize DataTable
+  useEffect(() => {
+    if (data.length > 0) {
+      $('#userTable').DataTable({
+        responsive: true,
+        destroy: true, // Prevent reinitialization issues
+        dom: 'Bfrtip', // Add buttons layout
+        buttons: ['copy', 'csv', 'excel', 'pdf', 'print'], // Export options
+        pageLength: 10,
+        pagingType: 'full_numbers', // Options: 'simple', 'simple_numbers', 'full', 'full_numbers'
+      });
+    }
+  }, [data]);
 
 
   const handleToggle = (userId, currentStatus, name) => {
@@ -404,15 +423,15 @@ function App() {
       </div>
       <div id="default-styled-tab-content">
         <div className="hidden  rounded-lg bg-gray-50 " id="styled-userList" role="tabpanel" aria-labelledby="userList-tab">
-          <table className="table-auto border-separate ">
+          <table id="userTable" className="display nowwrap w-100 table-auto " >
             <thead>
               <tr>
                 <th>S.No.</th>
-                <th>Id</th>
+                {/* <th>Id</th> */}
                 <th>Image</th>
                 <th>Name</th>
                 <th>Email</th>
-                <th>Password</th>
+                {/* <th>Password</th> */}
                 <th>Mobile</th>
                 <th>Created At</th>
                 <th>Updated At</th>
@@ -426,10 +445,10 @@ function App() {
               {data.map(user => (
                 <tr key={user.userId}>
                   <td>{data.indexOf(user) + 1}</td>
-                  <td>{user.userId}</td>
+                  {/* <td>{user.userId}</td> */}
                   <td>
                     <Zoom>
-                      <img src={`http://localhost:8001${user.userImage}`} alt="User Image" className='h-20 w-20' />
+                      <img src={`http://localhost:8001${user.userImage}`} alt="User Image" className='h-10 w-10' />
                     </Zoom>
                   </td>
 
@@ -438,7 +457,7 @@ function App() {
                     {user.userName}
                   </td>
                   <td>{user.userEmail}</td>
-                  <td>{user.userPassword}</td>
+                  {/* <td>{user.userPassword}</td> */}
                   <td>{user.userMobile}</td>
                   <td>
                     {user.userCreatedAt
@@ -765,7 +784,7 @@ function App() {
                   {previewEditImage && (
                     <div >
                       <p>Preview:</p>
-                      <img src={previewEditImage} alt="Preview" width="100" height="100"  className='flex mx-auto justify-center'/>
+                      <img src={previewEditImage} alt="Preview" width="100" height="100" className='flex mx-auto justify-center' />
                     </div>
                   )}
                 </div>
