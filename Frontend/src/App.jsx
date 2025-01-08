@@ -38,6 +38,10 @@ function App() {
         dom: 'Bfrtip', // Add buttons layout
         buttons: ['copy', 'csv', 'excel', 'pdf', 'print'], // Export options
         pageLength: 10,
+        language: {
+          searchPlaceholder: 'Search...',
+                 
+        },
         pagingType: 'full_numbers', // Options: 'simple', 'simple_numbers', 'full', 'full_numbers'
       });
     }
